@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,8 @@ public class FragmentReturn extends Fragment {
     private Button returnContinue;
     private Button returnFinish;
     private Button returnHistoryQuery;
+    private Button returnSendMsgButton;
+    private EditText returnSendMsgEditText;
     private TextView returnHistoryTextView;
     private Handler mHandleruser;
     private Handler mHandlerbook;
@@ -34,6 +37,7 @@ public class FragmentReturn extends Fragment {
     private String bookId;
     private String bookName;
     private String bookUid;
+    private String ID;
 
     @Nullable
     @Override
@@ -45,6 +49,8 @@ public class FragmentReturn extends Fragment {
         returnFinish = view.findViewById(R.id.return_fin_button);
         returnHistoryQuery = view.findViewById(R.id.return_hist_button);
         returnHistoryTextView = view.findViewById(R.id.return_hist_msg);
+        returnSendMsgEditText = view.findViewById(R.id.return_send_msg_edittext);
+        returnSendMsgButton = view.findViewById(R.id.return_send_msg_button);
         mHandleruser = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -156,7 +162,9 @@ public class FragmentReturn extends Fragment {
                         //responese = s1;
                         if(responese[0].equals("f")){
                             if(responese[1].equals("success")){
-                                returnTextView.setText("归还成功");
+                                ID= responese[2];
+                                Log.d(TAG, "handleMessage: id="+ID);
+                                returnTextView.setText("用户："+ userName +"，归还："+ bookName +"成功！\n 如需继续还书，请点击继续归还");
                             }
                             if(responese[1].equals("fail")){
                                 returnTextView.setText("还书失败，失败原因：" + responese[2]);
@@ -196,6 +204,8 @@ public class FragmentReturn extends Fragment {
             }
         };
 
+
+
         returnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -234,6 +244,14 @@ public class FragmentReturn extends Fragment {
             }
         });
 
+        returnSendMsgButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                parent.mConnectedThread.setmHandler(mHandlerquery);
+                returnUpdateMsg("borrowlists", returnSendMsgEditText.getText().toString());
+            }
+        });
+
 
         return view;
     }
@@ -259,9 +277,29 @@ public class FragmentReturn extends Fragment {
     }
 
     public void returnQuery(String tablename){
-        String select = "select * from " + tablename + ";";
-        String selectStr = "g|"+ tablename + "|" + select + "|";
-        parent.btwrite(selectStr);
+        if(bookUid != null){
+            String select = "select TIME,USERNAME,msg from " + tablename + " where BOOKUID="+bookUid+";";
+            String selectStr = "g|"+ tablename + "|" + select + "|";
+            parent.btwrite(selectStr);
+        } else {
+            returnHistoryTextView.setText("请在还书成功后查询");
+        }
+
+    }
+
+    public void returnUpdateMsg(String tablename, String msg) {
+        Log.d(TAG, "returnUpdateMsg: id=" + ID);
+        if (!ID.equals("")) {
+
+            String update = "update " + tablename + " set msg=\'" + msg + "\' where ID="+ID+";";
+
+            String updateStr = "i|"+ tablename + "|" + update + "|" ;
+            parent.btwrite(updateStr);
+        } else {
+            returnHistoryTextView.setText("请在还书成功后输入感想");
+        }
+
+
     }
 }
 

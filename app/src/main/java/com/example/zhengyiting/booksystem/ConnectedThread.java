@@ -54,7 +54,7 @@ public class ConnectedThread extends Thread {
 
         // Keep listening to the InputStream until an exception occurs
         while (true) {
-            byte[] buffer = new byte[100];
+            byte[] buffer = new byte[500];
             try {
                 // Read from the InputStream
                 mHandler = getmHandler();

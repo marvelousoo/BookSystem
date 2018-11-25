@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,8 @@ public class FragmentBorrow extends Fragment {
     private Button borrowContinue;
     private Button borrowFinish;
     private Button borrowHistoryQuery;
+    private Button borrowMsgSendButton;
+    private EditText borrowMsgSendEditText;
     private TextView borrowHistoryTextView;
     private Handler mHandleruser;
     private Handler mHandlerbook;
@@ -34,7 +37,7 @@ public class FragmentBorrow extends Fragment {
     private String bookId;
     private String bookName;
     private String bookUid;
-    private String temp;
+    private String ID;
 
     @Nullable
     @Override
@@ -46,6 +49,8 @@ public class FragmentBorrow extends Fragment {
         borrowFinish = view.findViewById(R.id.borrow_fin_button);
         borrowHistoryQuery = view.findViewById(R.id.borrow_hist_button);
         borrowHistoryTextView = view.findViewById(R.id.borrow_hist_msg);
+        borrowMsgSendEditText = view.findViewById(R.id.borrow_send_msg_edittext);
+        borrowMsgSendButton = view.findViewById(R.id.borrow_send_msg_button);
         mHandleruser = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -157,7 +162,8 @@ public class FragmentBorrow extends Fragment {
                         //responese = s1;
                         if(responese[0].equals("e")){
                             if(responese[1].equals("success")){
-                                borrowTextView.setText("借阅成功");
+                                ID= responese[2];
+                                borrowTextView.setText("用户："+ userName +"，借阅："+ bookName +"成功！\n 如需继续借书，请点击继续借书");
                             }
                             if(responese[1].equals("fail")){
                                 borrowTextView.setText("借书失败，失败原因：" + responese[2]);
@@ -235,6 +241,14 @@ public class FragmentBorrow extends Fragment {
             }
         });
 
+        borrowMsgSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                parent.mConnectedThread.setmHandler(mHandlerquery);
+                borrowUpdateMsg("borrowlists", borrowMsgSendEditText.getText().toString());
+            }
+        });
+
 
         return view;
     }
@@ -260,9 +274,25 @@ public class FragmentBorrow extends Fragment {
     }
 
     public void borrowQuery(String tablename){
-        String select = "select * from " + tablename + ";";
+        //ID = "";
+        String select = "select TIME,USERNAME,msg from " + tablename + " where BOOKUID="+bookUid+";";
         String selectStr = "g|"+ tablename + "|" + select + "|";
         parent.btwrite(selectStr);
+    }
+
+    public void borrowUpdateMsg(String tablename, String msg) {
+
+        if (!ID.equals("")) {
+            //Log.d(TAG, "borrowUpdateMsg: " + msg + ": "+msg.length());
+            String update = "update " + tablename + " set msg=\'" + msg + "\' where ID="+ID+";";
+            //Log.d(TAG, "borrowUpdateMsg: " + update + ": "+update.length());
+            String updateStr = "i|"+ tablename + "|" + update + "|" ;
+            parent.btwrite(updateStr);
+        } else {
+            borrowHistoryTextView.setText("请在借书成功后输入感想");
+        }
+
+
     }
 }
 
